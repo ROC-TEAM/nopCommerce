@@ -12,8 +12,14 @@
     }
     @if (Model.ExistingAddresses.Count > 0)
     {
-        <div class="section select-billing-address">
-            <label for="billing-address-select">@T("Checkout.SelectBillingAddressOrEnterNewOne")</label>
+            <div class="section select-billing-address">
+                <label for="billing-address-select">@T("Checkout.SelectBillingAddressOrEnterNewOne")</label>
+                @if (Model.InvalidExistingAddresses.Count > 0)
+                {
+                    <label class="min-amount-warning">
+                        @string.Format(T("Checkout.Addresses.Invalid").Text, Model.InvalidExistingAddresses.Count)
+                    </label>
+                }
             <div>
                 <select name="billing_address_id" id="billing-address-select" class="address-select"
                         title="" onchange="Billing.newAddress(!this.value)">
@@ -29,6 +35,10 @@
                         if (address.CityEnabled && !string.IsNullOrEmpty(address.City))
                         {
                             addressLine += ", " + address.City;
+                        }
+                        if (address.CountyEnabled && !string.IsNullOrEmpty(address.County))
+                        {
+                            addressLine += ", " + address.County;
                         }
                         if (address.StateProvinceEnabled && !string.IsNullOrEmpty(address.StateProvinceName))
                         {

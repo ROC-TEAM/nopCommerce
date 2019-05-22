@@ -44,8 +44,8 @@ namespace Nop.Web.Framework.Mvc.Filters
             public ValidateIpAddressFilter(IWebHelper webHelper,
                 SecuritySettings securitySettings)
             {
-                this._webHelper = webHelper;
-                this._securitySettings = securitySettings;
+                _webHelper = webHelper;
+                _securitySettings = securitySettings;
             }
 
             #endregion
@@ -64,7 +64,7 @@ namespace Nop.Web.Framework.Mvc.Filters
                 if (context.HttpContext.Request == null)
                     return;
 
-                if (!DataSettingsHelper.DatabaseIsInstalled())
+                if (!DataSettingsManager.DatabaseIsInstalled)
                     return;
 
                 //get action and controller names

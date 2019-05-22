@@ -1,31 +1,31 @@
 ﻿@model CheckoutShippingAddressModel
 @using System.Text
 <div class="checkout-data">
-    @if (Model.AllowPickUpInStore && !Model.PickUpInStoreOnly && Model.PickupPoints.Any())
+    @if (Model.AllowPickupInStore && !Model.PickupInStoreOnly && Model.PickupPoints.Any())
     {
         <div class="section pickup-in-store">
             <p class="selector">
-                <input asp-for="PickUpInStore" onclick="Shipping.togglePickUpInStore(this)" />
-                <label asp-for="PickUpInStore">@T("Checkout.PickupPoints")</label>
+                <input asp-for="PickupInStore" onclick="Shipping.togglePickupInStore(this)" />
+                <label asp-for="PickupInStore">@T("Checkout.PickupPoints")</label>
             </p>
             <p class="description">
                 <i>@T("Checkout.PickupPoints.Description")</i>
             </p>
-            <script type="text/javascript">
+            <script>
                 $(document).ready(function () {
-                    Shipping.togglePickUpInStore($('#@Html.IdFor(model => model.PickUpInStore)'));
+                    Shipping.togglePickupInStore($('#@Html.IdFor(model => model.PickupInStore)'));
                 });
             </script>
         </div>
     }
-    @if (Model.AllowPickUpInStore)
+    @if (Model.AllowPickupInStore)
     {
         <div class="section pickup-points" id="pickup-points-form">
             @if (Model.PickupPoints.Any())
             {
-                if (Model.PickUpInStoreOnly)
+                if (Model.PickupInStoreOnly)
                 { 
-                    <input type="hidden" asp-for="PickUpInStore"/>
+                    <input type="hidden" asp-for="PickupInStore"/>
                 }
                 <div class="select-pickup-points">
                     @if (Model.PickupPoints.Count == 1)
@@ -35,7 +35,7 @@
                         <div class="single-pickup-point">
                             <ul>
                                 <li class="single-pickup-point name">@point.Name</li>
-                                <li class="single-pickup-point address">@($"{point.Address} {point.City} {point.StateName} {point.CountryName}")</li>
+                                <li class="single-pickup-point address">@($"{point.Address} {point.City} {point.County} {point.StateName} {point.CountryName}")</li>
                                 @if (!string.IsNullOrEmpty(point.PickupFee))
                                 {
                                     <li class="single-pickup-point fee">@point.PickupFee</li>
@@ -59,6 +59,10 @@
                                 {
                                     addressLine.AppendFormat(", {0}", point.City);
                                 }
+                                if (!string.IsNullOrEmpty(point.County))
+                                {
+                                    addressLine.AppendFormat(", {0}", point.County);
+                                }
                                 if (!string.IsNullOrEmpty(point.StateName))
                                 {
                                     addressLine.AppendFormat(", {0}", point.StateName);
@@ -80,7 +84,7 @@
                 {
                     var src = $"https://maps.googleapis.com/maps/api/js{(string.IsNullOrEmpty(Model.GoogleMapsApiKey) ? string.Empty : $"?key={Model.GoogleMapsApiKey}")}";
                     <div class="pickup-points-map" id="map">
-                        <script type="text/javascript">
+                        <script>
                             var markers = new Map();
                             var googleMap = null;
                             $(document).ready(function () {
@@ -105,7 +109,7 @@
                                                         map: googleMap,
                                                         title: "@point.Name",
                                                         position: new google.maps.LatLng(@point.Latitude, @point.Longitude),
-                                                        icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+                                                        icon: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png"
                                                     });
                                                     markers.set("@value", marker);
                                                     google.maps.event.addListener(marker, 'click', function () {
@@ -131,7 +135,7 @@
                                                                 map: googleMap,
                                                                 title: "@point.Name",
                                                                 position: results[0].geometry.location,
-                                                                icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+                                                                icon: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png"
                                                             });
                                                             markers.set("@value", marker);
                                                             google.maps.event.addListener(marker, 'click', function () {
@@ -151,12 +155,12 @@
                                         }
                                     }
 
-                                    $('#pickup-points-select').change(function() {
+                                    $('#pickup-points-select').on('change', function() {
                                         new google.maps.event.trigger(markers.get(this.value), 'click' );
                                     });
 
-                                    $("#@Html.IdFor(model => model.PickUpInStore)").change(function() {
-                                        if ($('#@Html.IdFor(model => model.PickUpInStore)').is(':checked')) {
+                                    $("#@Html.IdFor(model => model.PickupInStore)").on('change', function() {
+                                        if ($('#@Html.IdFor(model => model.PickupInStore)').is(':checked')) {
                                             var center = googleMap.getCenter();
                                             google.maps.event.trigger(googleMap, 'resize');
                                             googleMap.setCenter(center);
@@ -178,7 +182,7 @@
             </div>
         </div>
     }
-    @if (!Model.PickUpInStoreOnly)
+    @if (!Model.PickupInStoreOnly)
     {
         <div class="shipping-addresses" id="shipping-addresses-form">
             @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.OpCheckoutShippingAddressTop })
@@ -186,6 +190,12 @@
             {
                 <div class="section select-shipping-address">
                     <label for="shipping-address-select">@T("Checkout.SelectShippingAddressOrEnterNewOne")</label>
+                    @if (Model.InvalidExistingAddresses.Count > 0)
+                    {
+                        <label class="min-amount-warning">
+                            @string.Format(T("Checkout.Addresses.Invalid").Text, Model.InvalidExistingAddresses.Count)
+                        </label>
+                    }
                     <div>
                         <select name="shipping_address_id" id="shipping-address-select" class="address-select"
                                 title="" onchange="Shipping.newAddress(!this.value)">
@@ -201,6 +211,10 @@
                                 if (address.CityEnabled && !string.IsNullOrEmpty(address.City))
                                 {
                                     addressLine += ", " + address.City;
+                                }
+                                if (address.CountyEnabled && !string.IsNullOrEmpty(address.County))
+                                {
+                                    addressLine += ", " + address.County;
                                 }
                                 if (address.StateProvinceEnabled && !string.IsNullOrEmpty(address.StateProvinceName))
                                 {

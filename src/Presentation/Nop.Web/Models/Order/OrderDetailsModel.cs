@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Nop.Web.Framework.Mvc.Models;
+using Nop.Web.Framework.Models;
 using Nop.Web.Models.Common;
 
 namespace Nop.Web.Models.Order
@@ -36,7 +36,7 @@ namespace Nop.Web.Models.Order
         public bool IsReturnRequestAllowed { get; set; }
         
         public bool IsShippable { get; set; }
-        public bool PickUpInStore { get; set; }
+        public bool PickupInStore { get; set; }
         public AddressModel PickupAddress { get; set; }
         public string ShippingStatus { get; set; }
         public AddressModel ShippingAddress { get; set; }

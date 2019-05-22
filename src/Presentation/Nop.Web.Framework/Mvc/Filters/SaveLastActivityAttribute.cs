@@ -43,8 +43,8 @@ namespace Nop.Web.Framework.Mvc.Filters
             public SaveLastActivityFilter(ICustomerService customerService,
                 IWorkContext workContext)
             {
-                this._customerService = customerService;
-                this._workContext = workContext;
+                _customerService = customerService;
+                _workContext = workContext;
             }
 
             #endregion
@@ -67,7 +67,7 @@ namespace Nop.Web.Framework.Mvc.Filters
                 if (!context.HttpContext.Request.Method.Equals(WebRequestMethods.Http.Get, StringComparison.InvariantCultureIgnoreCase))
                     return;
 
-                if (!DataSettingsHelper.DatabaseIsInstalled())
+                if (!DataSettingsManager.DatabaseIsInstalled)
                     return;
 
                 //update last activity date

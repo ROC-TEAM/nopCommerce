@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
-using Nop.Core;
+using Nop.Core.Infrastructure;
 using Nop.Services.Security;
 using Nop.Web.Framework.Mvc.Filters;
 
@@ -16,16 +16,31 @@ namespace Nop.Web.Areas.Admin.Controllers
     [AdminAntiForgery(true)]
     public partial class JbimagesController : BaseAdminController
     {
-        private readonly IPermissionService _permissionService;
+        #region Const
 
-        public JbimagesController(IPermissionService permissionService)
+        private const string RESULTCODE_FIELD_KEY = "resultCode";
+        private const string RESULT_FIELD_KEY = "result";
+        private const string FILENAME_FIELD_KEY = "filename";
+
+        #endregion
+
+        #region Fields
+
+        private readonly INopFileProvider _fileProvider;
+        private readonly IPermissionService _permissionService;
+       
+        #endregion
+        
+        public JbimagesController(INopFileProvider fileProvider,
+            IPermissionService permissionService)
         {
-            this._permissionService = permissionService;
+            _fileProvider = fileProvider;
+            _permissionService = permissionService;
         }
 
         protected virtual IList<string> GetAllowedFileTypes()
         {
-            return new List<string> {".gif", ".jpg", ".jpeg", ".png", ".bmp"};
+            return new List<string> { ".gif", ".jpg", ".jpeg", ".png", ".bmp" };
         }
 
         [HttpPost]
@@ -33,8 +48,8 @@ namespace Nop.Web.Areas.Admin.Controllers
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.HtmlEditorManagePictures))
             {
-                ViewData["resultCode"] = "failed";
-                ViewData["result"] = "No access to this functionality";
+                ViewData[RESULTCODE_FIELD_KEY] = "failed";
+                ViewData[RESULT_FIELD_KEY] = "No access to this functionality";
                 return View();
             }
 
@@ -44,27 +59,27 @@ namespace Nop.Web.Areas.Admin.Controllers
             var uploadFile = Request.Form.Files.FirstOrDefault();
             if (uploadFile == null)
             {
-                ViewData["resultCode"] = "failed";
-                ViewData["result"] = "No file name provided";
+                ViewData[RESULTCODE_FIELD_KEY] = "failed";
+                ViewData[RESULT_FIELD_KEY] = "No file name provided";
                 return View();
             }
 
-            var fileName = Path.GetFileName(uploadFile.FileName);
+            var fileName = _fileProvider.GetFileName(uploadFile.FileName);
             if (string.IsNullOrEmpty(fileName))
             {
-                ViewData["resultCode"] = "failed";
-                ViewData["result"] = "No file name provided";
+                ViewData[RESULTCODE_FIELD_KEY] = "failed";
+                ViewData[RESULT_FIELD_KEY] = "No file name provided";
                 return View();
             }
 
             var directory = "~/wwwroot/images/uploaded/";
-            var filePath = Path.Combine(CommonHelper.MapPath(directory), fileName);
+            var filePath = _fileProvider.Combine(_fileProvider.MapPath(directory), fileName);
 
-            var fileExtension = Path.GetExtension(filePath);
+            var fileExtension = _fileProvider.GetFileExtension(filePath);
             if (!GetAllowedFileTypes().Contains(fileExtension))
             {
-                ViewData["resultCode"] = "failed";
-                ViewData["result"] = $"Files with {fileExtension} extension cannot be uploaded";
+                ViewData[RESULTCODE_FIELD_KEY] = "failed";
+                ViewData[RESULT_FIELD_KEY] = $"Files with {fileExtension} extension cannot be uploaded";
                 return View();
             }
 
@@ -72,10 +87,10 @@ namespace Nop.Web.Areas.Admin.Controllers
             {
                 uploadFile.CopyTo(fileStream);
             }
-
-            ViewData["resultCode"] = "success";
-            ViewData["result"] = "success";
-            ViewData["filename"] = this.Url.Content($"{directory}{fileName}");
+           
+            ViewData[RESULTCODE_FIELD_KEY] = "success";
+            ViewData[RESULT_FIELD_KEY] = "success";
+            ViewData[FILENAME_FIELD_KEY] = Url.Content($"{directory}{fileName}");
             return View();
         }
     }

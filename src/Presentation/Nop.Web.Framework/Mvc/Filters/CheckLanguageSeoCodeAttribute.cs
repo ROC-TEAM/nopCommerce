@@ -50,10 +50,10 @@ namespace Nop.Web.Framework.Mvc.Filters
                 IWorkContext workContext,
                 LocalizationSettings localizationSettings)
             {
-                this._languageService = languageService;
-                this._webHelper = webHelper;
-                this._workContext = workContext;
-                this._localizationSettings = localizationSettings;
+                _languageService = languageService;
+                _webHelper = webHelper;
+                _workContext = workContext;
+                _localizationSettings = localizationSettings;
             }
 
             #endregion
@@ -76,7 +76,7 @@ namespace Nop.Web.Framework.Mvc.Filters
                 if (!context.HttpContext.Request.Method.Equals(WebRequestMethods.Http.Get, StringComparison.InvariantCultureIgnoreCase))
                     return;
 
-                if (!DataSettingsHelper.DatabaseIsInstalled())
+                if (!DataSettingsManager.DatabaseIsInstalled)
                     return;
 
                 //whether SEO friendly URLs are enabled

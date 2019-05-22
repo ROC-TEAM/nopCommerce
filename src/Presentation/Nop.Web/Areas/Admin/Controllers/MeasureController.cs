@@ -1,45 +1,50 @@
 ﻿using System;
-using System.Linq;
 using Microsoft.AspNetCore.Mvc;
-using Nop.Web.Areas.Admin.Extensions;
-using Nop.Web.Areas.Admin.Models.Directory;
 using Nop.Core.Domain.Directory;
 using Nop.Services.Configuration;
 using Nop.Services.Directory;
 using Nop.Services.Localization;
 using Nop.Services.Logging;
 using Nop.Services.Security;
-using Nop.Web.Framework.Kendoui;
+using Nop.Web.Areas.Admin.Factories;
+using Nop.Web.Areas.Admin.Infrastructure.Mapper.Extensions;
+using Nop.Web.Areas.Admin.Models.Directory;
 using Nop.Web.Framework.Mvc;
+using Nop.Web.Framework.Mvc.ModelBinding;
 
 namespace Nop.Web.Areas.Admin.Controllers
 {
     public partial class MeasureController : BaseAdminController
-	{
-		#region Fields
+    {
+        #region Fields
 
-        private readonly IMeasureService _measureService;
-        private readonly MeasureSettings _measureSettings;
-        private readonly ISettingService _settingService;
-        private readonly IPermissionService _permissionService;
-        private readonly ILocalizationService _localizationService;
         private readonly ICustomerActivityService _customerActivityService;
+        private readonly ILocalizationService _localizationService;
+        private readonly IMeasureModelFactory _measureModelFactory;
+        private readonly IMeasureService _measureService;
+        private readonly IPermissionService _permissionService;
+        private readonly ISettingService _settingService;
+        private readonly MeasureSettings _measureSettings;
 
         #endregion
 
         #region Ctor
 
-        public MeasureController(IMeasureService measureService,
-            MeasureSettings measureSettings, ISettingService settingService,
-            IPermissionService permissionService, ILocalizationService localizationService,
-            ICustomerActivityService customerActivityService)
+        public MeasureController(ICustomerActivityService customerActivityService,
+            ILocalizationService localizationService,
+            IMeasureModelFactory measureModelFactory,
+            IMeasureService measureService,
+            IPermissionService permissionService,
+            ISettingService settingService,
+            MeasureSettings measureSettings)
         {
-            this._measureService = measureService;
-            this._measureSettings = measureSettings;
-            this._settingService = settingService;
-            this._permissionService = permissionService;
-            this._localizationService = localizationService;
-            this._customerActivityService = customerActivityService;
+            _customerActivityService = customerActivityService;
+            _localizationService = localizationService;
+            _measureModelFactory = measureModelFactory;
+            _measureService = measureService;
+            _permissionService = permissionService;
+            _settingService = settingService;
+            _measureSettings = measureSettings;
         }
 
         #endregion
@@ -51,41 +56,34 @@ namespace Nop.Web.Areas.Admin.Controllers
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageShippingSettings))
                 return AccessDeniedView();
 
-            return View();
+            //prepare model
+            var model = _measureModelFactory.PrepareMeasureSearchModel(new MeasureSearchModel());
+
+            return View(model);
         }
 
         #region Weights
 
         [HttpPost]
-        public virtual IActionResult Weights(DataSourceRequest command)
+        public virtual IActionResult Weights(MeasureWeightSearchModel searchModel)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageShippingSettings))
-                return AccessDeniedKendoGridJson();
+                return AccessDeniedDataTablesJson();
 
-            var weightsModel = _measureService.GetAllMeasureWeights()
-                .Select(x => x.ToModel())
-                .ToList();
-            foreach (var wm in weightsModel)
-                wm.IsPrimaryWeight = wm.Id == _measureSettings.BaseWeightId;
-            var gridModel = new DataSourceResult
-            {
-                Data = weightsModel,
-                Total = weightsModel.Count
-            };
+            //prepare model
+            var model = _measureModelFactory.PrepareMeasureWeightListModel(searchModel);
 
-            return Json(gridModel);
-		}
+            return Json(model);
+        }
 
         [HttpPost]
         public virtual IActionResult WeightUpdate(MeasureWeightModel model)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageShippingSettings))
                 return AccessDeniedView();
-            
+
             if (!ModelState.IsValid)
-            {
-                return Json(new DataSourceResult { Errors = ModelState.SerializeErrors() });
-            }
+                return ErrorJson(ModelState.SerializeErrors());
 
             var weight = _measureService.GetMeasureWeightById(model.Id);
             weight = model.ToEntity(weight);
@@ -97,7 +95,7 @@ namespace Nop.Web.Areas.Admin.Controllers
 
             return new NullJsonResult();
         }
-        
+
         [HttpPost]
         public virtual IActionResult WeightAdd(MeasureWeightModel model)
         {
@@ -105,9 +103,7 @@ namespace Nop.Web.Areas.Admin.Controllers
                 return AccessDeniedView();
 
             if (!ModelState.IsValid)
-            {
-                return Json(new DataSourceResult {Errors = ModelState.SerializeErrors()});
-            }
+                return ErrorJson(ModelState.SerializeErrors());
 
             var weight = new MeasureWeight();
             weight = model.ToEntity(weight);
@@ -117,7 +113,7 @@ namespace Nop.Web.Areas.Admin.Controllers
             _customerActivityService.InsertActivity("AddNewMeasureWeight",
                 string.Format(_localizationService.GetResource("ActivityLog.AddNewMeasureWeight"), weight.Id), weight);
 
-            return new NullJsonResult();
+            return Json(new { Result = true });
         }
 
         [HttpPost]
@@ -126,13 +122,13 @@ namespace Nop.Web.Areas.Admin.Controllers
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageShippingSettings))
                 return AccessDeniedView();
 
-            var weight = _measureService.GetMeasureWeightById(id);
-            if (weight == null)
-                throw new ArgumentException("No weight found with the specified id");
+            //try to get a weight with the specified id
+            var weight = _measureService.GetMeasureWeightById(id)
+                ?? throw new ArgumentException("No weight found with the specified id", nameof(id));
 
             if (weight.Id == _measureSettings.BaseWeightId)
             {
-                return Json(new DataSourceResult { Errors = _localizationService.GetResource("Admin.Configuration.Shipping.Measures.Weights.CantDeletePrimary") });
+                return ErrorJson(_localizationService.GetResource("Admin.Configuration.Shipping.Measures.Weights.CantDeletePrimary"));
             }
 
             _measureService.DeleteMeasureWeight(weight);
@@ -150,12 +146,12 @@ namespace Nop.Web.Areas.Admin.Controllers
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageShippingSettings))
                 return AccessDeniedView();
 
-            var primaryWeight = _measureService.GetMeasureWeightById(id);
-            if (primaryWeight != null)
-            {
-                _measureSettings.BaseWeightId = primaryWeight.Id;
-                _settingService.SaveSetting(_measureSettings);
-            }
+            //try to get a weight with the specified id
+            var weight = _measureService.GetMeasureWeightById(id)
+                ?? throw new ArgumentException("No weight found with the specified id", nameof(id));
+
+            _measureSettings.BaseWeightId = weight.Id;
+            _settingService.SaveSetting(_measureSettings);
 
             return Json(new { result = true });
         }
@@ -165,23 +161,15 @@ namespace Nop.Web.Areas.Admin.Controllers
         #region Dimensions
 
         [HttpPost]
-        public virtual IActionResult Dimensions(DataSourceRequest command)
+        public virtual IActionResult Dimensions(MeasureDimensionSearchModel searchModel)
         {
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageShippingSettings))
-                return AccessDeniedKendoGridJson();
+                return AccessDeniedDataTablesJson();
 
-            var dimensionsModel = _measureService.GetAllMeasureDimensions()
-                .Select(x => x.ToModel())
-                .ToList();
-            foreach (var wm in dimensionsModel)
-                wm.IsPrimaryDimension = wm.Id == _measureSettings.BaseDimensionId;
-            var gridModel = new DataSourceResult
-            {
-                Data = dimensionsModel,
-                Total = dimensionsModel.Count
-            };
+            //prepare model
+            var model = _measureModelFactory.PrepareMeasureDimensionListModel(searchModel);
 
-            return Json(gridModel);
+            return Json(model);
         }
 
         [HttpPost]
@@ -191,9 +179,7 @@ namespace Nop.Web.Areas.Admin.Controllers
                 return AccessDeniedView();
 
             if (!ModelState.IsValid)
-            {
-                return Json(new DataSourceResult { Errors = ModelState.SerializeErrors() });
-            }
+                return ErrorJson(ModelState.SerializeErrors());
 
             var dimension = _measureService.GetMeasureDimensionById(model.Id);
             dimension = model.ToEntity(dimension);
@@ -213,9 +199,7 @@ namespace Nop.Web.Areas.Admin.Controllers
                 return AccessDeniedView();
 
             if (!ModelState.IsValid)
-            {
-                return Json(new DataSourceResult { Errors = ModelState.SerializeErrors() });
-            }
+                return ErrorJson(ModelState.SerializeErrors());
 
             var dimension = new MeasureDimension();
             dimension = model.ToEntity(dimension);
@@ -225,7 +209,7 @@ namespace Nop.Web.Areas.Admin.Controllers
             _customerActivityService.InsertActivity("AddNewMeasureDimension",
                 string.Format(_localizationService.GetResource("ActivityLog.AddNewMeasureDimension"), dimension.Id), dimension);
 
-            return new NullJsonResult();
+            return Json(new { Result = true });
         }
 
         [HttpPost]
@@ -234,13 +218,13 @@ namespace Nop.Web.Areas.Admin.Controllers
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageShippingSettings))
                 return AccessDeniedView();
 
-            var dimension = _measureService.GetMeasureDimensionById(id);
-            if (dimension == null)
-                throw new ArgumentException("No dimension found with the specified id");
+            //try to get a dimension with the specified id
+            var dimension = _measureService.GetMeasureDimensionById(id)
+                ?? throw new ArgumentException("No dimension found with the specified id", nameof(id));
 
             if (dimension.Id == _measureSettings.BaseDimensionId)
             {
-                return Json(new DataSourceResult { Errors = _localizationService.GetResource("Admin.Configuration.Shipping.Measures.Dimensions.CantDeletePrimary") });
+                return ErrorJson(_localizationService.GetResource("Admin.Configuration.Shipping.Measures.Dimensions.CantDeletePrimary"));
             }
 
             _measureService.DeleteMeasureDimension(dimension);
@@ -258,12 +242,12 @@ namespace Nop.Web.Areas.Admin.Controllers
             if (!_permissionService.Authorize(StandardPermissionProvider.ManageShippingSettings))
                 return AccessDeniedView();
 
-            var primaryDimension = _measureService.GetMeasureDimensionById(id);
-            if (primaryDimension != null)
-            {
-                _measureSettings.BaseDimensionId = id;
-                _settingService.SaveSetting(_measureSettings);
-            }
+            //try to get a dimension with the specified id
+            var dimension = _measureService.GetMeasureDimensionById(id)
+                ?? throw new ArgumentException("No dimension found with the specified id", nameof(id));
+
+            _measureSettings.BaseDimensionId = dimension.Id;
+            _settingService.SaveSetting(_measureSettings);
 
             return Json(new { result = true });
         }

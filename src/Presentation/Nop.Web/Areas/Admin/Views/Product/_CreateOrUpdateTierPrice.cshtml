@@ -1,11 +1,11 @@
-@model ProductModel.TierPriceModel
+@model TierPriceModel
 
 <div asp-validation-summary="All"></div>
 <input asp-for="Id" type="hidden" />
 
 @if (ViewBag.RefreshPage == true)
 {
-    <script type="text/javascript">
+    <script>
         try {window.opener.document.forms['@(Context.Request.Query["formId"])'].@(Context.Request.Query["btnId"]).click();}
         catch (e){}
         window.close();

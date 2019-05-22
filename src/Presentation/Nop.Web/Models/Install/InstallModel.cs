@@ -1,19 +1,17 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using FluentValidation.Attributes;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Nop.Core.Data;
+using Nop.Web.Framework.Models;
 using Nop.Web.Framework.Mvc.ModelBinding;
-using Nop.Web.Framework.Mvc.Models;
-using Nop.Web.Validators.Install;
 
 namespace Nop.Web.Models.Install
 {
-    [Validator(typeof(InstallValidator))]
     public partial class InstallModel : BaseNopModel
     {
         public InstallModel()
         {
-            this.AvailableLanguages = new List<SelectListItem>();
+            AvailableLanguages = new List<SelectListItem>();
         }
 
         public string AdminEmail { get; set; }
@@ -25,8 +23,7 @@ namespace Nop.Web.Models.Install
         public string ConfirmPassword { get; set; }
 
         public string DatabaseConnectionString { get; set; }
-        public string DataProvider { get; set; }
-        public bool DisableSqlCompact { get; set; }
+        public DataProviderType DataProvider { get; set; }
         //SQL Server properties
         public string SqlConnectionInfo { get; set; }
 

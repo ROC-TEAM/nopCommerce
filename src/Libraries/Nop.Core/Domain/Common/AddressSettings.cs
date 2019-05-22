@@ -11,6 +11,7 @@ namespace Nop.Core.Domain.Common
         /// Gets or sets a value indicating whether 'Company' is enabled
         /// </summary>
         public bool CompanyEnabled { get; set; }
+
         /// <summary>
         /// Gets or sets a value indicating whether 'Company' is required
         /// </summary>
@@ -30,6 +31,7 @@ namespace Nop.Core.Domain.Common
         /// Gets or sets a value indicating whether 'Street address 2' is enabled
         /// </summary>
         public bool StreetAddress2Enabled { get; set; }
+
         /// <summary>
         /// Gets or sets a value indicating whether 'Street address 2' is required
         /// </summary>
@@ -54,6 +56,16 @@ namespace Nop.Core.Domain.Common
         /// Gets or sets a value indicating whether 'City' is required
         /// </summary>
         public bool CityRequired { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether 'County' is enabled
+        /// </summary>
+        public bool CountyEnabled { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether 'County' is required
+        /// </summary>
+        public bool CountyRequired { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether 'Country' is enabled

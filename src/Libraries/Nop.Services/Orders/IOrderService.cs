@@ -62,6 +62,7 @@ namespace Nop.Services.Orders
         /// <param name="osIds">Order status identifiers; null to load all orders</param>
         /// <param name="psIds">Payment status identifiers; null to load all orders</param>
         /// <param name="ssIds">Shipping status identifiers; null to load all orders</param>
+        /// <param name="billingPhone">Billing phone. Leave empty to load all records.</param>
         /// <param name="billingEmail">Billing email. Leave empty to load all records.</param>
         /// <param name="billingLastName">Billing last name. Leave empty to load all records.</param>
         /// <param name="orderNotes">Search in order notes. Leave empty to load all records.</param>
@@ -75,9 +76,9 @@ namespace Nop.Services.Orders
             int billingCountryId = 0, string paymentMethodSystemName = null,
             DateTime? createdFromUtc = null, DateTime? createdToUtc = null,
             List<int> osIds = null, List<int> psIds = null, List<int> ssIds = null,
-            string billingEmail = null, string billingLastName = "", 
+            string billingPhone = null, string billingEmail = null, string billingLastName = "",
             string orderNotes = null, int pageIndex = 0, int pageSize = int.MaxValue, bool getOnlyTotalCount = false);
-        
+
         /// <summary>
         /// Inserts an order
         /// </summary>
@@ -97,6 +98,35 @@ namespace Nop.Services.Orders
         /// <param name="paymentMethodSystemName">Payment method system name</param>
         /// <returns>Order</returns>
         Order GetOrderByAuthorizationTransactionIdAndPaymentMethod(string authorizationTransactionId, string paymentMethodSystemName);
+
+        /// <summary>
+        /// Parse tax rates
+        /// </summary>
+        /// <param name="order">Order</param>
+        /// <param name="taxRatesStr"></param>
+        /// <returns>Rates</returns>
+        SortedDictionary<decimal, decimal> ParseTaxRates(Order order, string taxRatesStr);
+
+        /// <summary>
+        /// Gets a value indicating whether an order has items to be added to a shipment
+        /// </summary>
+        /// <param name="order">Order</param>
+        /// <returns>A value indicating whether an order has items to be added to a shipment</returns>
+        bool HasItemsToAddToShipment(Order order);
+
+        /// <summary>
+        /// Gets a value indicating whether an order has items to ship
+        /// </summary>
+        /// <param name="order">Order</param>
+        /// <returns>A value indicating whether an order has items to ship</returns>
+        bool HasItemsToShip(Order order);
+
+        /// <summary>
+        /// Gets a value indicating whether an order has items to deliver
+        /// </summary>
+        /// <param name="order">Order</param>
+        /// <returns>A value indicating whether an order has items to deliver</returns>
+        bool HasItemsToDeliver(Order order);
 
         #endregion
 
@@ -129,6 +159,41 @@ namespace Nop.Services.Orders
         /// <param name="orderItem">The order item</param>
         void DeleteOrderItem(OrderItem orderItem);
 
+        /// <summary>
+        /// Gets a total number of items in all shipments
+        /// </summary>
+        /// <param name="orderItem">Order item</param>
+        /// <returns>Total number of items in all shipments</returns>
+        int GetTotalNumberOfItemsInAllShipment(OrderItem orderItem);
+
+        /// <summary>
+        /// Gets a total number of already items which can be added to new shipments
+        /// </summary>
+        /// <param name="orderItem">Order item</param>
+        /// <returns>Total number of already delivered items which can be added to new shipments</returns>
+        int GetTotalNumberOfItemsCanBeAddedToShipment(OrderItem orderItem);
+
+        /// <summary>
+        /// Gets a total number of not yet shipped items (but added to shipments)
+        /// </summary>
+        /// <param name="orderItem">Order item</param>
+        /// <returns>Total number of not yet shipped items (but added to shipments)</returns>
+        int GetTotalNumberOfNotYetShippedItems(OrderItem orderItem);
+
+        /// <summary>
+        /// Gets a total number of already shipped items
+        /// </summary>
+        /// <param name="orderItem">Order item</param>
+        /// <returns>Total number of already shipped items</returns>
+        int GetTotalNumberOfShippedItems(OrderItem orderItem);
+
+        /// <summary>
+        /// Gets a total number of already delivered items
+        /// </summary>
+        /// <param name="orderItem">Order  item</param>
+        /// <returns>Total number of already delivered items</returns>
+        int GetTotalNumberOfDeliveredItems(OrderItem orderItem);
+
         #endregion
 
         #region Order notes
@@ -145,6 +210,13 @@ namespace Nop.Services.Orders
         /// </summary>
         /// <param name="orderNote">The order note</param>
         void DeleteOrderNote(OrderNote orderNote);
+
+        /// <summary>
+        /// Formats the order note text
+        /// </summary>
+        /// <param name="orderNote">Order note</param>
+        /// <returns>Formatted text</returns>
+        string FormatOrderNoteText(OrderNote orderNote);
 
         #endregion
 

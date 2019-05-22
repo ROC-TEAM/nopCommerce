@@ -1,24 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using FluentValidation.Attributes;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Nop.Web.Framework.Mvc.ModelBinding;
-using Nop.Web.Framework.Mvc.Models;
-using Nop.Web.Validators.Customer;
+using Nop.Web.Framework.Models;
 
 namespace Nop.Web.Models.Customer
 {
-    [Validator(typeof(CustomerInfoValidator))]
     public partial class CustomerInfoModel : BaseNopModel
     {
         public CustomerInfoModel()
         {
-            this.AvailableTimeZones = new List<SelectListItem>();
-            this.AvailableCountries = new List<SelectListItem>();
-            this.AvailableStates = new List<SelectListItem>();
-            this.AssociatedExternalAuthRecords = new List<AssociatedExternalAuthModel>();
-            this.CustomerAttributes = new List<CustomerAttributeModel>();
+            AvailableTimeZones = new List<SelectListItem>();
+            AvailableCountries = new List<SelectListItem>();
+            AvailableStates = new List<SelectListItem>();
+            AssociatedExternalAuthRecords = new List<AssociatedExternalAuthModel>();
+            CustomerAttributes = new List<CustomerAttributeModel>();
+            GdprConsents = new List<GdprConsentModel>();
         }
         
         [DataType(DataType.EmailAddress)]
@@ -91,6 +89,11 @@ namespace Nop.Web.Models.Customer
         [NopResourceDisplayName("Account.Fields.City")]
         public string City { get; set; }
 
+        public bool CountyEnabled { get; set; }
+        public bool CountyRequired { get; set; }
+        [NopResourceDisplayName("Account.Fields.County")]
+        public string County { get; set; }
+
         public bool CountryEnabled { get; set; }
         public bool CountryRequired { get; set; }
         [NopResourceDisplayName("Account.Fields.Country")]
@@ -143,6 +146,8 @@ namespace Nop.Web.Models.Customer
         public bool AllowCustomersToRemoveAssociations { get; set; }
 
         public IList<CustomerAttributeModel> CustomerAttributes { get; set; }
+
+        public IList<GdprConsentModel> GdprConsents { get; set; }
 
         #region Nested classes
 

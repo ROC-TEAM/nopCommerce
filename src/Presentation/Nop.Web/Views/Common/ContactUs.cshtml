@@ -13,7 +13,7 @@
     </div>
     <div class="page-body">
         @await Component.InvokeAsync("TopicBlock", new { systemName = "ContactUs" })
-        @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.ContactusTop })
+        @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.ContactUsTop })
         @if (Model.SuccessfullySent)
         {
             <div class="result">
@@ -34,7 +34,7 @@
                         </div>
                         <div class="inputs">
                             <label asp-for="Email" asp-postfix=":"></label>
-                            <input asp-for="Email" placeholder="@T("ContactUs.Email.Hint")" class="email"/>
+                            <input asp-for="Email" placeholder="@T("ContactUs.Email.Hint")" class="email" />
                             <nop-required />
                             <span asp-validation-for="Email"></span>
                         </div>
@@ -66,6 +66,6 @@
                 </div>
             </form>
         }
-        @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.ContactusBottom })
+        @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.ContactUsBottom })
     </div>
 </div>

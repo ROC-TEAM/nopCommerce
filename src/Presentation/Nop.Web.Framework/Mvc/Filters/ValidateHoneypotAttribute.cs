@@ -46,9 +46,9 @@ namespace Nop.Web.Framework.Mvc.Filters
                 IWebHelper webHelper,
                 SecuritySettings securitySettings)
             {
-                this._logger = logger;
-                this._webHelper = webHelper;
-                this._securitySettings = securitySettings;
+                _logger = logger;
+                _webHelper = webHelper;
+                _securitySettings = securitySettings;
             }
 
             #endregion
@@ -67,7 +67,7 @@ namespace Nop.Web.Framework.Mvc.Filters
                 if (filterContext.HttpContext.Request == null)
                     return;
 
-                if (!DataSettingsHelper.DatabaseIsInstalled())
+                if (!DataSettingsManager.DatabaseIsInstalled)
                     return;
 
                 //whether honeypot is enabled
